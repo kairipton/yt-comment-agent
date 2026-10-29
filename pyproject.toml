@@ -1,0 +1,40 @@
+[project]
+name = "yt-comment-agent"
+version = "0.1.0"
+description = "연애 상담 유튜브 영상에 AI가 댓글 초안을 쓰고, 크롬 프로필로 직접 타이핑해 게시하는 대시보드"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=1.15.0",
+    "fastapi>=0.150.0",
+    "google-api-python-client>=2.201.0",
+    "pillow>=13.0.0",
+    "playwright>=1.64.0",
+    "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
+    "requests>=2.34.2",
+    "uvicorn>=0.54.0",
+    "youtube-transcript-api>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]  # 저장소 뿌리를 import 경로에 — tests/에서 agent 패키지를 찾게 한다
+# 테스트 이름은 한글 `성격_대상_동작` (docs/TESTING.md). 이 접두어가 아니면 수집되지 않는다.
+python_functions = ["기능_*", "예외_*", "경계_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/F: 기본 오류 · I: import 정렬 · B: 흔한 버그 패턴 · UP: 최신 문법
+select = ["E", "F", "I", "B", "UP"]
+# 줄 길이는 강제하지 않는다 — ruff는 한글을 폭 2로 세어 한글 주석·메시지가 쉽게 넘는다.
+ignore = ["E501"]

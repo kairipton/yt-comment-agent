@@ -1,0 +1,2 @@
+# 실행 파일(.bat)은 줄바꿈을 바꾸지 않는다 — Windows 명령 창은 CRLF여야 분기(goto)가 깨지지 않는다
+*.bat -text

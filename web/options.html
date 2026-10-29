@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>옵션 · 유튜브 댓글 에이전트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <h1 class="brand">유튜브 댓글 에이전트</h1>
+    <nav class="page-nav" aria-label="페이지">
+      <a href="index.html">대시보드</a>
+      <a href="options.html" aria-current="page">옵션</a>
+    </nav>
+  </header>
+
+  <p class="hint">프로그램이 어떻게 움직일지 정하는 곳이에요. 바꾼 뒤 맨 아래 [저장]을 누르면 바로 반영돼요. 값이 잘못되면 저장하지 않고 이유를 알려 줘요.</p>
+
+  <!-- 저장 결과 — 성공 · 실패 이유 -->
+  <div class="notice ok" id="save-ok" hidden></div>
+  <div class="notice bad" id="save-error" hidden></div>
+
+  <!-- 묶음별 옵션 칸 — options.js가 그린다 -->
+  <div class="option-sections" id="sections"></div>
+
+  <div class="save-bar">
+    <span class="hint" id="dirty-hint">바뀐 것이 없어요.</span>
+    <button class="btn" id="btn-reset" type="button">되돌리기</button>
+    <button class="btn primary big" id="btn-save" type="button">저장</button>
+  </div>
+
+  <!-- 댓글 작성 지침 — 따로 저장한다 -->
+  <section class="card option-card" id="prompt-card">
+    <div class="option-head">
+      <h2>댓글 작성 지침</h2>
+      <p class="sub">AI가 댓글 초안을 쓸 때 따르는 글이에요. 고치면 다음 초안부터 바로 쓰여요.</p>
+    </div>
+    <p class="hint" id="prompt-fields"><!-- 쓸 수 있는 자리표시 — options.js가 채움 --></p>
+    <label class="sr-only" for="prompt-text">댓글 작성 지침</label>
+    <textarea id="prompt-text" rows="18"></textarea>
+    <div class="notice ok" id="prompt-ok" hidden></div>
+    <div class="notice bad" id="prompt-error" hidden></div>
+    <div class="row end">
+      <button class="btn" id="btn-prompt-reset" type="button">되돌리기</button>
+      <button class="btn primary" id="btn-prompt-save" type="button">지침 저장</button>
+    </div>
+  </section>
+</div>
+<script src="options.js"></script>
+</body>
+</html>

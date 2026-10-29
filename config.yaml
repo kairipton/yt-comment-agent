@@ -1,0 +1,73 @@
+dev_mode: false
+channel_posting: false
+post_mode: manual
+profiles:
+- name: 유튜브1
+  user_data_dir: C:/chrome-profiles/yt1
+- name: 유튜브2
+  user_data_dir: C:/chrome-profiles/yt2
+- name: 유튜브3
+  user_data_dir: C:/chrome-profiles/yt3
+profile_assign: manual
+channels:
+- id: UCxlc0Ky0aWoD8uI09ad44Tg
+  name: 외롭여
+- id: UC-ee_ziASM251TMXe3P3VZA
+  name: 리즈시절 LizTV
+- id: UC09L3JxGVcn7SKLa-pjTEmw
+  name: 러브커넥트 유지연
+- id: UCVdtDW-HF4KluixGaBAcI4w
+  name: 연애데이터 노노
+- id: UCkGl2jieOVhGiHPdXF77Yyw
+  name: 심리조각
+test_video_ids:
+- z_K3rHRbqck
+fetch:
+  per_channel: 3
+  timeout_seconds: 15
+comment:
+  brand: 운명원
+  brand_desc: 연애 사주 잘 봐 주는 곳으로 유명한 곳
+  min_chars: 40
+  max_chars: 120
+  min_count: no_spaces
+  max_count: with_spaces
+  max_similarity: 0.5
+  max_rewrites: 3
+  grounding_min_overlap: 2
+  forbidden_phrases:
+  - 받아봤
+  - 받아 봤
+  - 봤는데 맞
+  - 봤더니 맞
+  - 보고 왔
+  - 보고왔
+  - 다녀왔
+  - 다녀 왔
+  - 상담받
+  - 상담 받
+  - 후기
+  - 직접 봤
+  - 실제로 봤
+  - 소름 돋게 맞
+limits:
+  daily_max_comments: 10
+  max_retries_per_post: 2
+auto:
+  gap_seconds: 60
+rising:
+  keyword: 연애
+  published_within_hours: 48
+  min_views: 1000
+  max_views: 5000
+  min_views_per_hour: 150
+  remeasure: false
+  remeasure_min_gap_minutes: 30
+llm:
+  model: claude-haiku-5-5
+  effort: high
+  draft_on_select: true
+  prompt_file: prompts/comment_system.md
+storage:
+  db_path: data/agent.db
+  screenshot_dir: data/screenshots

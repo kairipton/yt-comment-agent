@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>유튜브 댓글 에이전트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <!-- 머리 표시줄: 앞은 늘 보는 세 가지(남은 댓글 · 로그인 프로필 · 기록), 뒤는 설정 상태 칩 -->
+  <header class="topbar">
+    <h1 class="brand">유튜브 댓글 에이전트</h1>
+    <nav class="page-nav" aria-label="페이지">
+      <a href="index.html" aria-current="page">대시보드</a>
+      <a href="options.html">옵션</a>
+    </nav>
+    <div class="top-right">
+      <span class="pill" id="quota"></span>
+      <!-- 개발 모드일 때만 보인다(app.js loadStatus) — 오늘 게시 수를 0부터 다시 센다 -->
+      <button class="pill pill-btn" id="quota-reset" type="button" hidden>초기화</button>
+      <button class="pill pill-btn" id="profile-count" type="button" aria-expanded="false" aria-controls="profile-panel"></button>
+      <a class="pill link-pill" href="#history-section">게시 기록 보기</a>
+    </div>
+  </header>
+  <div class="chips" id="status-chips"><!-- app.js가 채움 --></div>
+
+  <!-- 프로필 관리: 프로필마다 크롬 열기(로그인용) · 로그인 표시. 머리의 [프로필 관리] 버튼으로 펼친다 -->
+  <section class="profile-panel" id="profile-panel" hidden>
+    <div class="panel-head">
+      <h2>프로필 관리</h2>
+      <button class="text-btn" id="profile-panel-close" type="button">닫기</button>
+    </div>
+    <ol class="panel-steps">
+      <li>「로그인 필요」인 프로필의 [크롬 열기]를 누르고, 열린 크롬 창에서 유튜브에 로그인해요.</li>
+      <li>로그인했으면 그 크롬 창을 닫아요.</li>
+      <li>잠시 뒤 상태가 저절로 「로그인되어 있음」으로 바뀌면, 그 프로필로 댓글을 달 수 있어요.</li>
+    </ol>
+    <p class="hint">댓글을 달기 전에 프로필 크롬 창은 꼭 닫아 주세요 — 열려 있으면 게시 로봇이 같은 프로필을 열 수 없어요.</p>
+    <ul class="profile-rows" id="profile-rows"><!-- app.js가 채움 --></ul>
+    <p class="notice bad" id="profile-error" hidden></p>
+  </section>
+
+  <!-- 설정 파일 오류 — 서버가 이유를 주면 app.js가 띄운다 -->
+  <div class="banner danger" id="config-alert" hidden></div>
+
+  <!-- 단계 표시: 지금 어느 칸인지 늘 보이게 한다(지난 칸 ✓ · 지금 칸 강조). 스크롤해도 위에 붙어 따라온다. 칠하기는 app.js의 renderSteps -->
+  <ol class="stepper" id="stepper" aria-label="진행 단계">
+    <li data-step="1"><span class="dot">1</span><span class="label">영상 불러오기</span></li>
+    <li data-step="2"><span class="dot">2</span><span class="label">영상 선택</span></li>
+    <li data-step="3"><span class="dot">3</span><span class="label">댓글 달기</span></li>
+  </ol>
+
+  <!-- 세 칸: 늘 셋 다 보이고, 지금 칸만 펼친다(나머지는 요약 띠·점선 띠). 어느 칸을 펼칠지는 app.js의 activeStep -->
+  <main class="steps">
+
+    <!-- ① 영상 불러오기 -->
+    <section class="step" id="step1">
+      <div class="bar done" id="bar1" hidden>
+        <span class="mark ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+        <span class="bar-title">영상 불러오기</span>
+        <img class="bar-thumb" id="bar1-thumb" alt="">
+        <span class="bar-text" id="bar1-text"></span>
+        <span class="bar-hint">영상 목록은 여기 접혀 있어요</span>
+        <button class="btn small change-btn" id="btn-change" type="button">← 다른 영상으로 바꾸기</button>
+      </div>
+      <div class="card current" id="body1">
+        <div class="card-head">
+          <div class="head-left">
+            <span class="num">1</span>
+            <div>
+              <h2>영상 불러오기</h2>
+              <p class="sub">불러온 영상 중 댓글을 달 영상을 하나 눌러 주세요. 누르면 ②에 AI가 쓴 초안이 나와요</p>
+            </div>
+          </div>
+          <button class="btn primary big" id="btn-load" type="button">영상 불러오기</button>
+        </div>
+
+        <div class="tools">
+          <div class="tabs" id="tabs" role="tablist" aria-label="영상 종류"><!-- app.js가 채움 --></div>
+          <form class="link-row" id="link-form">
+            <label class="sr-only" for="link-input">유튜브 영상 링크</label>
+            <input id="link-input" type="text" placeholder="유튜브 링크를 붙여 넣어도 돼요" autocomplete="off">
+            <button class="btn" id="btn-link" type="submit">추가</button>
+          </form>
+        </div>
+        <p class="notice bad" id="link-error" hidden></p>
+        <div class="rising-row">
+          <button class="btn warm" id="btn-rising" type="button">뜨기 직전 영상 찾기</button>
+          <button class="btn ghost" id="btn-remeasure" type="button" hidden>다시 측정</button>
+          <span class="hint" id="rising-hint"><!-- 기준 안내는 app.js가 설정값으로 채운다 --></span>
+        </div>
+        <p class="hint" id="list-hint">[영상 불러오기]를 누르면 내 테스트 영상과 지정 채널의 최신 영상이 나와요.</p>
+        <div class="notice bad" id="list-failures" hidden></div>
+        <ul class="video-grid" id="video-list"></ul>
+      </div>
+    </section>
+
+    <!-- ② 영상 선택 — 고른 영상의 고민 한 줄과 초안 -->
+    <section class="step" id="step2">
+      <div class="bar" id="bar2"><!-- app.js가 채움: 점선 띠(아직) 또는 ✓ 띠(끝남) --></div>
+      <div class="card current" id="body2" hidden>
+        <div class="card-head">
+          <div class="head-left">
+            <span class="num">2</span>
+            <div>
+              <h2>영상 선택</h2>
+              <p class="sub">AI가 영상을 읽고 쓴 초안이에요. 마음에 들면 아래 ③에서 달아요</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="key-alert" id="key-alert" hidden>
+          <div class="key-alert-title">AI API 키가 설정되지 않았어요</div>
+          <p>댓글 초안을 만들 수 없어 게시도 할 수 없어요.</p>
+          <p>프로젝트 폴더의 <code>.env</code> 파일에 <code>ANTHROPIC_API_KEY=</code> 값을 넣은 뒤 이 페이지를 새로고침해 주세요.</p>
+        </div>
+        <div class="notice pending" id="d-pending" hidden>
+          <p>아직 이 영상의 초안이 없어요. AI를 부를 때마다 요금이 조금 들어요.</p>
+          <button class="btn primary" id="btn-write" type="button">초안 쓰기</button>
+        </div>
+        <p class="notice loading" id="d-loading" hidden>AI가 영상을 읽고 초안을 쓰는 중이에요… (10~20초)</p>
+        <div class="notice bad" id="d-error" hidden>
+          <p id="d-error-text"></p>
+          <button class="btn" id="btn-retry-draft" type="button">다시 시도</button>
+        </div>
+
+        <div class="draft-layout" id="detail" hidden>
+          <div class="draft-main">
+            <div class="media">
+              <a class="media-thumb" id="d-thumb-link" target="_blank" rel="noopener" aria-label="유튜브에서 영상 열기">
+                <img id="d-thumb" alt="">
+                <span class="play" aria-hidden="true"><svg viewBox="0 0 64 46"><rect width="64" height="46" rx="12"/><path d="M26 14l14 9-14 9z"/></svg></span>
+              </a>
+              <div class="media-info">
+                <div>
+                  <h3 class="video-title" id="d-title"></h3>
+                  <p class="meta" id="d-meta"></p>
+                </div>
+                <div class="worry-box">
+                  <span class="label">AI가 정리한 영상 속 고민</span>
+                  <p class="worry" id="d-worry"></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="notice warn" id="d-notice" hidden><!-- 댓글을 달 수 없을 때 이유 — app.js가 채움 --></div>
+
+            <div>
+              <span class="label">유튜브에 이렇게 달려요 <span class="version" id="d-version"></span></span>
+              <div class="yt-comment" id="d-preview">
+                <span class="avatar" id="d-avatar"></span>
+                <div class="yt-body">
+                  <span class="yt-meta" id="d-who"></span>
+                  <p class="yt-text" id="d-comment"></p>
+                  <p class="draft-facts" id="d-facts"></p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn" id="btn-rewrite" type="button">마음에 안 들어요, 다시 써 주세요</button>
+              <span class="hint">다시 쓸 때마다 AI 요금이 조금 들어요</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 댓글 달기 -->
+    <section class="step" id="step3">
+      <!-- 접힌 모양: ②를 보는 동안은 「프로필 + [댓글 달기]」 작은 칸(클릭을 늘리지 않는다), 그 전엔 점선 띠 -->
+      <div class="bar" id="bar3-wait">
+        <span class="mark dash">3</span>
+        <span class="bar-title">댓글 달기</span>
+        <span class="bar-text">초안을 확인하면 열려요 — 크롬이 열려 한 글자씩 입력하고 게시해요</span>
+      </div>
+      <div class="bar ready" id="bar3-ready" hidden>
+        <div class="ready-left">
+          <span class="mark ring">3</span>
+          <span class="bar-title">댓글 달기</span>
+        </div>
+        <div class="profile-pick">
+          <span class="label inline">프로필</span>
+          <div class="profile-buttons" id="profile-buttons" role="group" aria-label="댓글을 달 프로필"></div>
+          <span class="auto-assign" id="profile-auto" hidden></span>
+        </div>
+        <button class="btn primary big" id="btn-post" type="button" disabled>댓글 달기</button>
+        <p class="hint full" id="post-hint">②에서 영상을 고르면 버튼이 켜져요.</p>
+      </div>
+
+      <div class="card current" id="body3" hidden>
+        <div class="card-head">
+          <div class="head-left">
+            <span class="num" id="p-badge">3</span>
+            <div>
+              <div class="title-line">
+                <h2 id="p-title">댓글 다는 중</h2>
+                <span class="tone-pill" id="p-tone" hidden></span>
+              </div>
+              <p class="sub" id="p-sub">크롬 창에서 진행 모습이 그대로 보여요. 창을 닫으면 멈춰요</p>
+            </div>
+          </div>
+        </div>
+
+        <ol class="progress" id="progress"></ol>
+        <p class="notice retry" id="post-retry" hidden></p>
+
+        <!-- 진행 중·손봐야: 크롬에 입력되는 글 -->
+        <div id="p-typed-box" hidden>
+          <span class="label" id="p-typed-label"></span>
+          <div class="yt-comment soft">
+            <span class="avatar" id="p-avatar"></span>
+            <p class="yt-text"><span id="p-typed"></span><span class="caret" id="p-caret"></span><span class="untyped" id="p-rest"></span></p>
+          </div>
+        </div>
+
+        <!-- 끝났어요 -->
+        <div id="post-done" hidden>
+          <span class="label">유튜브에 달린 댓글</span>
+          <div class="yt-comment ok">
+            <span class="avatar" id="done-avatar"></span>
+            <div class="yt-body">
+              <span class="yt-meta" id="done-who"></span>
+              <p class="yt-text" id="done-text"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 손봐야 해요: 캡처 + 안내 -->
+        <div class="fail-layout" id="post-fail" hidden>
+          <a class="shot-frame" id="post-fail-shot-link" target="_blank" rel="noopener" hidden>
+            <img class="shot" id="post-fail-shot" alt="실패한 순간의 화면">
+            <span class="shot-tag">크게 보기</span>
+          </a>
+          <p class="hint" id="post-fail-noshot" hidden>이 실패에는 화면 캡처가 없어요 — 크롬이 열리기 전에 멈췄거나 창이 닫혔어요.</p>
+          <div class="fail-notes">
+            <div class="side-box soft">
+              <span class="box-title" id="fail-what-title"></span>
+              <p id="fail-what"></p>
+            </div>
+            <div class="side-box">
+              <span class="box-title">이유</span>
+              <p id="post-fail-reason"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 막혔어요: 이유 + 먼저 단 댓글 -->
+        <div class="fail-layout" id="post-blocked" hidden>
+          <div id="prev-box" hidden>
+            <span class="label" id="prev-label"></span>
+            <div class="yt-comment soft">
+              <span class="avatar" id="prev-avatar"></span>
+              <div class="yt-body">
+                <p class="yt-text" id="prev-text"></p>
+                <a id="prev-link" target="_blank" rel="noopener" hidden>유튜브에서 보기 ↗</a>
+              </div>
+            </div>
+          </div>
+          <div class="fail-notes">
+            <div class="side-box soft">
+              <span class="box-title">왜 막혔나요</span>
+              <p id="blocked-reason"></p>
+            </div>
+            <div class="side-box">
+              <span class="box-title">기록에 남겼어요</span>
+              <p>이번 시도는 게시 기록에 「게시 전 검사 거부」로 적혔어요. 오늘 상한에는 세지 않아요.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-foot" id="p-actions">
+          <a class="btn" id="btn-history" href="#history-section" hidden>게시 기록 보기</a>
+          <a class="btn" id="btn-view" target="_blank" rel="noopener" hidden>유튜브에서 댓글 보기 ↗</a>
+          <button class="btn" id="btn-other" type="button" hidden>다른 영상 고르기</button>
+          <button class="btn primary big" id="btn-again" type="button" hidden>다시 달아 보기</button>
+          <button class="btn ok big" id="btn-next" type="button" hidden>다음 영상 고르기 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 자동 모드(post_mode: auto)일 때만 보인다 -->
+    <section class="auto-box" id="auto-box" hidden>
+      <div class="auto-head">
+        <span class="bar-title">자동 모드</span>
+        <span class="hint" id="auto-hint">①에서 체크한 영상마다 초안 → 규칙 검사 → 게시를 차례로 돌려요. 영상 사이엔 잠깐 쉬고, 오늘 상한에 닿으면 멈춰요.</span>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="btn-auto" type="button" disabled>체크한 영상 자동으로 달기</button>
+        <button class="btn ghost" id="btn-auto-stop" type="button" hidden>멈추기</button>
+      </div>
+      <ul class="auto-list" id="auto-list"></ul>
+    </section>
+  </main>
+
+  <section class="card history" id="history-section">
+    <div class="history-head"><h2>게시 기록</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>시각</th><th>영상</th><th>프로필</th><th>댓글</th><th>결과</th><th>이유 · 링크</th></tr></thead>
+        <tbody id="history"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
